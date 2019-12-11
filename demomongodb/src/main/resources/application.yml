@@ -3,14 +3,5 @@ spring:
     mongodb:
       uri: mongodb://mydb:admin@localhost:27017/mydb
   profiles:
-    active:dev
-  path: log
-logging:
-  level:
-#    # root日志以WARN级别输出
-#    root: info
-#    # 此包下所有class以DEBUG级别输出
-    com.example.demomongodb: DEBUG
-
-
+    active: dev
 
