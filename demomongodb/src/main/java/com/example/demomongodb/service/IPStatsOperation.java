@@ -1,17 +1,28 @@
 package com.example.demomongodb.service;
 
 import com.example.demomongodb.document.IPStats;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.aggregation.GroupOperation;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Component
-public class WriteIPStats {
+public class IPStatsOperation {
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public void addCollection() {
         List<IPStats> ipStatsList = new ArrayList<>();
@@ -61,5 +72,43 @@ public class WriteIPStats {
         mongoTemplate.insert(ipStatsList, "ipStats");// 第一个参数是要插入的数据（文档），第二个参数是集合名称；批量插入
     }
 
+    public List<IPStats> query(){
+        Query query = Query.query(Criteria.where("srcIP").is("10.1.1.25"));
+        List<IPStats> ipStatsList = mongoTemplate.find(query, IPStats.class);
+        logger.debug("get {}", ipStatsList);
+        return ipStatsList;
+    }
+
+    public List<HashMap> aggregation(){
+        String[] keys = new String[]{"dstIP"};
+        String[] values = new String[]{"10.1.1.26"};
+        String[] queryKey = new String[]{"sendBytes"};
+        // 聚合操作
+        List<AggregationOperation> operations = new ArrayList<>();
+
+        // 筛选条件
+        for (int i = 0; i < keys.length; i++) {
+            operations.add(Aggregation.match(Criteria.where(keys[i]).is(values[i])));
+        }
+
+        //分组字段
+        GroupOperation groupOperation = Aggregation.group("dstIP");
+
+        // 聚合查询字段
+        for (int i = 0; i < queryKey.length; i++) {
+            groupOperation = groupOperation.sum(queryKey[i]).as(queryKey[i]);
+        }
+        // 添加选项  (聚合查询字段和添加筛选是有区别的注意)
+        operations.add(groupOperation);
+
+        // 最终聚合查询所有信息
+        Aggregation aggregation = Aggregation.newAggregation(operations);
+        // 查询结果
+        AggregationResults<HashMap> results = mongoTemplate.aggregate(aggregation, "ipStats", HashMap.class);
+        //获取结果
+        List<HashMap> result = results.getMappedResults();
+        logger.debug("result: {}", result);
+        return result;
+    }
 
 }

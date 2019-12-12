@@ -1,5 +1,6 @@
 package com.example.demomongodb.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.example.demomongodb.service.IPStatsOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,26 +10,22 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-public class Hello {
+public class QueryIPstats {
 
     @Autowired
     private IPStatsOperation IPStatsOperation;
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @RequestMapping(value = "/hello", method = RequestMethod.GET)
-    public String helloWorld(){
-        logger.info("hello");
-        logger.debug("this is debug");
+    @RequestMapping(value = "/query", method = RequestMethod.GET)
+    public String queryIPstats(){
 
-        return "hello world";
+        return JSON.toJSONString(IPStatsOperation.query());
     }
 
-    @RequestMapping(value = "/add", method = RequestMethod.GET)
-    public String add(){
-        IPStatsOperation.addCollection();
-        return "add success";
+    @RequestMapping(value = "/aggregation", method = RequestMethod.GET)
+    public String aggregationIPstats(){
+
+        return JSON.toJSONString(IPStatsOperation.aggregation());
     }
-
-
 }
